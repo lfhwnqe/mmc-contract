@@ -25,20 +25,34 @@ pnpm typechain
 pnpm test
 ```
 
+## config
+
+- set variables
+```shell
+npx hardhat vars set INFURA_API_KEY
+npx hardhat vars set TEST_API_KEY
+npx hardhat vars set ETHERSCAN_API_KEY
+```
+- get variables
+```shell
+npx hardhat vars list
+npx hardhat vars get INFURA_API_KEY
+```
+
 ## build
 
 - set variables
 ```shell
 $ npx hardhat vars set TEST_API_KEY
 ```
+## verify
+verify contract in etherscan
 
-## build
-cebdd5c0a4717c82d1596cce56f1731d11fad3f99a0ed06b9e7185693da1d011
-
+contract address:0xd4Ca987504bbAc09e6df1D4277c742cA43F044Ea
+chain :sepolia
 ```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat ignition deploy ./ignition/modules/Lock.ts
+# mmcToken address
+npx hardhat verify --network sepolia 0xd4Ca987504bbAc09e6df1D4277c742cA43F044Ea
+# courseMarket need mmcToken address
+npx hardhat verify --network sepolia 0x2738704a2A91f2C2724422540f7991Ed0D144b75 "0xd4Ca987504bbAc09e6df1D4277c742cA43F044Ea"
 ```
