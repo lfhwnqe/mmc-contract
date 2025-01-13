@@ -46,7 +46,7 @@ async function main() {
   await mmcToken.distributeInitialTokens(
     deployer.address, // 团队钱包
     deployer.address, // 市场营销钱包
-    deployer.address  // 社区钱包
+    deployer.address // 社区钱包
   );
 
   const tokenBalanceAfter = await mmcToken.balanceOf(deployer.address);
@@ -69,21 +69,17 @@ async function main() {
 
   // 添加测试课程
   console.log("\n添加测试课程...");
-  
+
   // 添加第一个测试课程
   await courseMarket.addCourse(
     "COURSE-001",
     "初级英语会话课程",
-    ethers.parseEther("10") // 10 MMC
+    10 // 直接使用整数，不用 parseEther
   );
   console.log("- 测试课程1添加成功");
 
   // 添加第二个测试课程
-  await courseMarket.addCourse(
-    "COURSE-002",
-    "商务英语进阶课程",
-    ethers.parseEther("20") // 20 MMC
-  );
+  await courseMarket.addCourse("COURSE-002", "商务英语进阶课程", 20);
   console.log("- 测试课程2添加成功");
 
   // 验证课程添加结果
@@ -92,12 +88,12 @@ async function main() {
   console.log("- 总课程数:", courseCount.toString());
 
   // 获取并显示课程详情
-  for (let i = 0; i < courseCount; i++) {
+  for (let i = 1; i <= courseCount; i++) {
     const course = await courseMarket.courses(i);
-    console.log(`\n课程 ${i + 1} 详情:`);
+    console.log(`\n课程 ${i} 详情:`);
     console.log("- ID:", course.web2CourseId);
     console.log("- 名称:", course.name);
-    console.log("- 价格:", ethers.formatEther(course.price), "MMC");
+    console.log("- 价格:", course.price.toString(), "MMC");
     console.log("- 创建者:", course.creator);
   }
 

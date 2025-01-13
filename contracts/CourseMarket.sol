@@ -68,7 +68,7 @@ contract CourseMarket is Ownable {
             "Course ID mismatch"
         );
 
-        // 调用YD代币合约的transferFrom函数，转移代币给课程创建者
+        // 调用MMC代币合约的transferFrom函数，转移代币给课程创建者
         require(
             mmcToken.transferFrom(
                 msg.sender, // 从购买者账户
@@ -104,7 +104,7 @@ contract CourseMarket is Ownable {
      * @notice 添加新课程
      * @param web2CourseId Web2平台的课程ID
      * @param name 课程名称
-     * @param price 课程价格(YD代币)
+     * @param price 课程价格(MMC代币)
      */
     function addCourse(
         string memory web2CourseId,
@@ -193,32 +193,51 @@ contract CourseMarket is Ownable {
         return (courseIds, courseDetails);
     }
 
-    // 分页获取课程列表
+    // 修改返回的课程结构
+    struct CourseView {
+        string web2CourseId;
+        string name;
+        uint256 price;
+        bool isActive;
+        address creator;
+        bool purchased;  // 添加购买状态字段
+    }
+
+    // 修改分页查询函数
     function getCoursesByPage(
+        address user,  // 如果未连接钱包，前端传入 address(0)
         uint256 page,
         uint256 pageSize
-    ) external view returns (Course[] memory, uint256) {
+    ) external view returns (CourseView[] memory, uint256) {
+        // 如果是零地址，则将 user 设为 msg.sender
+        address actualUser = user == address(0) ? msg.sender : user;
+        
         require(pageSize > 0, "Page size must be greater than 0");
         
         uint256 startIndex = page * pageSize;
         require(startIndex <= courseCount, "Page out of bounds");
         
-        // 计算实际返回的数量
         uint256 returnSize = pageSize;
         if (startIndex + pageSize > courseCount) {
             returnSize = courseCount - startIndex;
         }
         
-        // 创建返回数组
-        Course[] memory result = new Course[](returnSize);
+        CourseView[] memory result = new CourseView[](returnSize);
         
-        // 填充数组
         for (uint256 i = 0; i < returnSize; i++) {
-            uint256 courseId = startIndex + i + 1; // courseId 从1开始
-            result[i] = courses[courseId];
+            uint256 courseId = startIndex + i + 1;
+            Course memory course = courses[courseId];
+            
+            result[i] = CourseView({
+                web2CourseId: course.web2CourseId,
+                name: course.name,
+                price: course.price,
+                isActive: course.isActive,
+                creator: course.creator,
+                purchased: userCourses[actualUser][courseId]
+            });
         }
         
-        // 返回课程数组和总数
         return (result, courseCount);
     }
 }
