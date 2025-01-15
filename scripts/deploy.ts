@@ -100,6 +100,46 @@ async function main() {
   console.log("\n所有合约部署完成！");
   console.log("MMCToken:", await mmcToken.getAddress());
   console.log("CourseMarket:", await courseMarket.getAddress());
+
+  // 部署 MMCERC721Coin
+  console.log("\n部署 MMCERC721Coin...");
+  const MMCERC721Coin = await ethers.getContractFactory("MMCERC721Coin");
+  const mmcNFT = await MMCERC721Coin.deploy(
+    "MMC Course NFT",  // NFT 名称
+    "MMCNFT"          // NFT 符号
+  );
+  await mmcNFT.waitForDeployment();
+
+  console.log("MMCERC721Coin 部署成功！");
+  console.log("合约地址:", await mmcNFT.getAddress());
+
+  // 等待确认
+  console.log("\n等待区块确认...");
+  const nftReceipt = await mmcNFT.deploymentTransaction()?.wait();
+  console.log("部署交易已确认");
+  console.log("- MMCERC721Coin 区块高度:", nftReceipt?.blockNumber);
+
+  // 验证 NFT 合约信息
+  console.log("\nMMCERC721Coin 信息:");
+  const nftName = await mmcNFT.name();
+  const nftSymbol = await mmcNFT.symbol();
+  console.log("- 名称:", nftName);
+  console.log("- 符号:", nftSymbol);
+
+  // 铸造测试 NFT
+  console.log("\n铸造测试 NFT...");
+  const mintTx = await mmcNFT.safeMint(
+    deployer.address,
+    "ipfs://QmTest/1.json"  // 测试用的 URI
+  );
+  await mintTx.wait();
+  console.log("- 测试 NFT 铸造成功");
+
+  // 显示所有合约地址
+  console.log("\n所有合约部署完成！");
+  console.log("MMCToken:", await mmcToken.getAddress());
+  console.log("CourseMarket:", await courseMarket.getAddress());
+  console.log("MMCERC721Coin:", await mmcNFT.getAddress());
 }
 
 // 运行部署脚本
