@@ -8,17 +8,27 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MMCERC721Coin is ERC721, ERC721URIStorage, ERC721Enumerable, Ownable {
     uint256 private _nextTokenId;
+    mapping(address => bool) public minters;  // 使用映射来管理铸造权限
 
     // 铸造事件
     event NFTMinted(address indexed to, uint256 indexed tokenId, string tokenURI);
+    event MinterSet(address indexed minter, bool status);
 
     constructor(
         string memory name,
         string memory symbol
     ) ERC721(name, symbol) Ownable(msg.sender) {}
 
-    // 允许任何人铸造NFT，并设置自定义的tokenURI
+    // 添加铸造者
+    function setMinter(address minter, bool status) external onlyOwner {
+        require(minter != address(0), "Invalid minter address");
+        minters[minter] = status;
+        emit MinterSet(minter, status);
+    }
+
+    // 修改铸造函数，只允许授权的铸造者调用
     function safeMint(address to, string memory uri) public returns (uint256) {
+        require(minters[msg.sender], "Only authorized minters can mint NFTs");
         uint256 tokenId = _nextTokenId++;
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);

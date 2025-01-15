@@ -11,12 +11,36 @@ async function main() {
     user2: user2.address,
   });
 
-  // 1. 部署 MMC 代币
-  console.log("\n部署 MMC 代币...");
+  // 1. 部署 MMC Token
+  console.log("\n部署 MMC Token...");
   const MMCToken = await ethers.getContractFactory("MMCToken");
   const mmcToken = await MMCToken.deploy();
   await mmcToken.waitForDeployment();
   console.log("MMC Token 地址:", await mmcToken.getAddress());
+
+  // 2. 部署 MMCERC721Coin
+  console.log("\n部署 MMCERC721Coin...");
+  const MMCERC721Coin = await ethers.getContractFactory("MMCERC721Coin");
+  const mmcNFT = await MMCERC721Coin.deploy(
+    "MMC Course NFT",
+    "MMCNFT"
+  );
+  await mmcNFT.waitForDeployment();
+  console.log("MMCERC721Coin 地址:", await mmcNFT.getAddress());
+
+  // 3. 部署 CourseMarket
+  console.log("\n部署 CourseMarket...");
+  const CourseMarket = await ethers.getContractFactory("CourseMarket");
+  const courseMarket = await CourseMarket.deploy(
+    await mmcToken.getAddress(),
+    await mmcNFT.getAddress(),
+    owner.address
+  );
+  await courseMarket.waitForDeployment();
+  console.log("CourseMarket 地址:", await courseMarket.getAddress());
+
+  // 4. 设置 CourseMarket 为授权铸造者
+  await mmcNFT.setMinter(await courseMarket.getAddress(), true);
 
   // 2. 初始化代币分配
   console.log("\n初始化代币分配...");
@@ -30,24 +54,19 @@ async function main() {
   const ownerBalance = await mmcToken.balanceOf(owner.address);
   console.log("Owner 初始余额:", ownerBalance.toString());
 
-  // 3. 部署 CourseMarket
-  console.log("\n部署 CourseMarket...");
-  const CourseMarket = await ethers.getContractFactory("CourseMarket");
-  const courseMarket = await CourseMarket.deploy(await mmcToken.getAddress());
-  await courseMarket.waitForDeployment();
-  console.log("CourseMarket 地址:", await courseMarket.getAddress());
-
   // 4. 添加测试课程
   console.log("\n添加测试课程...");
   await courseMarket.addCourse(
     "COURSE-001",
     "测试课程1",
-    10 // 10 MMC，不使用 parseEther
+    10,
+    "ipfs://QmTest/course1.json"
   );
   await courseMarket.addCourse(
     "COURSE-002",
     "测试课程2",
-    20 // 20 MMC，不使用 parseEther
+    20,
+    "ipfs://QmTest/course2.json"
   );
 
   // 5. 转移一些代币给测试用户
@@ -86,6 +105,19 @@ async function main() {
 
   const hasCourse = await courseMarket.hasCourse(user1.address, "COURSE-001");
   console.log("User1 是否拥有课程:", hasCourse);
+
+  // 测试课程完成流程（只能由 oracle 调用）
+  console.log("\n测试课程完成流程...");
+  await courseMarket.completeCourse(user1.address, "COURSE-001");  // 使用 owner（oracle）调用
+
+  // 验证 NFT 铸造结果
+  const nftBalance = await mmcNFT.balanceOf(user1.address);
+  console.log("User1 的 NFT 数量:", nftBalance.toString());
+  if (nftBalance > 0) {
+    const tokenId = await mmcNFT.tokenOfOwnerByIndex(user1.address, 0);
+    const tokenURI = await mmcNFT.tokenURI(tokenId);
+    console.log("NFT Token URI:", tokenURI);
+  }
 
   console.log("\n调试完成！");
   console.log("MMC Token:", await mmcToken.getAddress());

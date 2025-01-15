@@ -3,13 +3,29 @@ pragma solidity ^0.8.28;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./MMCToken.sol";
+import "./MMCERC721Coin.sol";
 
 contract CourseMarket is Ownable {
     // YiDeng代币合约实例
     MMCToken public mmcToken;
+    MMCERC721Coin public mmcNFT;
+    // 添加 Oracle 地址
+    address public oracle;
 
-    constructor(address payable _mmcToken) Ownable(msg.sender) {
+    constructor(
+        address payable _mmcToken,
+        address payable _mmcNFT,
+        address _oracle
+    ) Ownable(msg.sender) {
         mmcToken = MMCToken(_mmcToken);
+        mmcNFT = MMCERC721Coin(_mmcNFT);
+        oracle = _oracle;
+    }
+
+    // 添加修改 oracle 地址的方法
+    function setOracle(address _oracle) external onlyOwner {
+        require(_oracle != address(0), "Invalid oracle address");
+        oracle = _oracle;
     }
 
     // 课程结构体定义
@@ -19,6 +35,7 @@ contract CourseMarket is Ownable {
         uint256 price; // 课程价格(MMC代币)
         bool isActive; // 课程是否可购买
         address creator; // 课程创建者地址
+        string metadataURI;  // 添加元数据 URI 字段，包含课程图片等信息
     }
 
     // 存储所有课程的映射：courseId => Course
@@ -38,6 +55,14 @@ contract CourseMarket is Ownable {
         address indexed buyer,
         uint256 indexed courseId,
         string web2CourseId
+    );
+
+    // 添加课程完成事件
+    event CourseCompleted(
+        address indexed student,
+        uint256 indexed courseId,
+        string web2CourseId,
+        uint256 nftTokenId
     );
 
     /**
@@ -105,35 +130,31 @@ contract CourseMarket is Ownable {
      * @param web2CourseId Web2平台的课程ID
      * @param name 课程名称
      * @param price 课程价格(MMC代币)
+     * @param metadataURI 元数据 URI
      */
     function addCourse(
         string memory web2CourseId,
         string memory name,
-        uint256 price
+        uint256 price,
+        string memory metadataURI  // 添加元数据参数
     ) external onlyOwner {
         require(price > 0, "Price must be greater than 0");
         require(bytes(name).length > 0, "Course name cannot be empty");
-        // 确保web2CourseId不为空
-        require(
-            bytes(web2CourseId).length > 0,
-            "Web2 course ID cannot be empty"
-        );
-        // 确保该web2CourseId尚未添加
+        require(bytes(web2CourseId).length > 0, "Web2 course ID cannot be empty");
+        require(bytes(metadataURI).length > 0, "Metadata URI cannot be empty");
         require(web2ToCourseId[web2CourseId] == 0, "Course already exists");
 
-        // 递增课程计数器
         courseCount++;
 
-        // 创建新课程
         courses[courseCount] = Course({
             web2CourseId: web2CourseId,
             name: name,
             price: price,
             isActive: true,
-            creator: msg.sender
+            creator: msg.sender,
+            metadataURI: metadataURI  // 保存元数据 URI
         });
 
-        // 建立web2CourseId到courseId的映射关系
         web2ToCourseId[web2CourseId] = courseCount;
     }
 
@@ -201,6 +222,7 @@ contract CourseMarket is Ownable {
         bool isActive;
         address creator;
         bool purchased;  // 添加购买状态字段
+        string metadataURI;  // 添加元数据 URI 字段
     }
 
     // 修改分页查询函数
@@ -234,10 +256,40 @@ contract CourseMarket is Ownable {
                 price: course.price,
                 isActive: course.isActive,
                 creator: course.creator,
-                purchased: userCourses[actualUser][courseId]
+                purchased: userCourses[actualUser][courseId],
+                metadataURI: course.metadataURI  // 添加元数据 URI
             });
         }
         
         return (result, courseCount);
+    }
+
+    // 修改课程完成方法，只允许 oracle 调用
+    function completeCourse(
+        address student,
+        string memory web2CourseId
+    ) external {
+        // 只允许 oracle 调用
+        require(msg.sender == oracle, "Only oracle can complete course");
+        
+        uint256 courseId = web2ToCourseId[web2CourseId];
+        require(courseId > 0, "Course does not exist");
+        require(userCourses[student][courseId], "Course not purchased");
+
+        Course memory course = courses[courseId];
+        
+        // 铸造 NFT 作为课程完成证明
+        uint256 tokenId = mmcNFT.safeMint(
+            student,
+            course.metadataURI  // 使用课程元数据作为 NFT 的元数据
+        );
+
+        // 触发课程完成事件
+        emit CourseCompleted(
+            student,
+            courseId,
+            web2CourseId,
+            tokenId
+        );
     }
 }
