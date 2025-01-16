@@ -137,7 +137,8 @@ async function main() {
   console.log("\n测试课程购买和完成流程...");
 
   // 1. 创建测试用户
-  const [_, testUser] = await ethers.getSigners();
+  const testUserAddress = "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"; // 你想要的特定地址
+  const testUser = await ethers.getImpersonatedSigner(testUserAddress);
   console.log("测试用户地址:", testUser.address);
 
   // 2. 转移一些代币给测试用户
