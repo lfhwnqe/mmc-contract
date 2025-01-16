@@ -26,6 +26,8 @@ pnpm test
 pnpm hardhat run scripts/debug.ts --network localhost
 pnpm hardhat run scripts/debug-721.ts --network localhost
 ```
+- nft ipfs upload
+[pinata](https://app.pinata.cloud/ipfs/files)
 
 ## config
 

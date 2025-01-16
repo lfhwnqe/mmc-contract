@@ -104,7 +104,7 @@ async function main() {
     "COURSE-001",
     "初级英语会话课程",
     10,
-    "ipfs://QmTest/course1.json" // 添加元数据 URI
+    "https://gateway.pinata.cloud/ipfs/bafkreia7eliuw4pll5y4afkqwwwatoxmbvvyudz4hmvym7rxopkp36pww4" // 添加元数据 URI
   );
   console.log("- 测试课程1添加成功");
 
@@ -113,7 +113,7 @@ async function main() {
     "COURSE-002",
     "商务英语进阶课程",
     20,
-    "ipfs://QmTest/course2.json" // 添加元数据 URI
+    "https://gateway.pinata.cloud/ipfs/bafkreia7eliuw4pll5y4afkqwwwatoxmbvvyudz4hmvym7rxopkp36pww4" // 添加元数据 URI
   );
   console.log("- 测试课程2添加成功");
 
@@ -135,7 +135,7 @@ async function main() {
 
   // 测试课程购买和完成流程
   console.log("\n测试课程购买和完成流程...");
-  
+
   // 1. 创建测试用户
   const [_, testUser] = await ethers.getSigners();
   console.log("测试用户地址:", testUser.address);

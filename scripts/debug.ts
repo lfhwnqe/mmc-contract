@@ -60,13 +60,13 @@ async function main() {
     "COURSE-001",
     "测试课程1",
     10,
-    "ipfs://QmTest/course1.json"
+    "https://gateway.pinata.cloud/ipfs/bafkreia7eliuw4pll5y4afkqwwwatoxmbvvyudz4hmvym7rxopkp36pww4"
   );
   await courseMarket.addCourse(
     "COURSE-002",
     "测试课程2",
     20,
-    "ipfs://QmTest/course2.json"
+    "https://gateway.pinata.cloud/ipfs/bafkreia7eliuw4pll5y4afkqwwwatoxmbvvyudz4hmvym7rxopkp36pww4"
   );
 
   // 5. 转移一些代币给测试用户

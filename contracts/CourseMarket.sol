@@ -269,7 +269,6 @@ contract CourseMarket is Ownable {
         address student,
         string memory web2CourseId
     ) external {
-        // 只允许 oracle 调用
         require(msg.sender == oracle, "Only oracle can complete course");
         
         uint256 courseId = web2ToCourseId[web2CourseId];
@@ -278,18 +277,62 @@ contract CourseMarket is Ownable {
 
         Course memory course = courses[courseId];
         
-        // 铸造 NFT 作为课程完成证明
+        // 在原有元数据 URI 基础上添加查询参数
+        string memory certificateURI = string(
+            abi.encodePacked(
+                course.metadataURI,
+                "?student=",
+                _addressToString(student),
+                "&completedAt=",
+                _uintToString(block.timestamp)
+            )
+        );
+        
         uint256 tokenId = mmcNFT.safeMint(
             student,
-            course.metadataURI  // 使用课程元数据作为 NFT 的元数据
+            certificateURI
         );
 
-        // 触发课程完成事件
         emit CourseCompleted(
             student,
             courseId,
             web2CourseId,
             tokenId
         );
+    }
+
+    // 辅助函数：将地址转换为字符串
+    function _addressToString(address _addr) internal pure returns (string memory) {
+        bytes32 value = bytes32(uint256(uint160(_addr)));
+        bytes memory alphabet = "0123456789abcdef";
+        bytes memory str = new bytes(42);
+        str[0] = "0";
+        str[1] = "x";
+        for (uint256 i = 0; i < 20; i++) {
+            str[2+i*2] = alphabet[uint8(value[i + 12] >> 4)];
+            str[3+i*2] = alphabet[uint8(value[i + 12] & 0x0f)];
+        }
+        return string(str);
+    }
+
+    // 辅助函数：将 uint 转换为字符串
+    function _uintToString(uint256 _i) internal pure returns (string memory) {
+        if (_i == 0) {
+            return "0";
+        }
+        uint256 j = _i;
+        uint256 length;
+        while (j != 0) {
+            length++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(length);
+        uint256 k = length;
+        j = _i;
+        while (j != 0) {
+            bstr[--k] = bytes1(uint8(48 + j % 10));
+            j /= 10;
+        }
+        return string(bstr);
     }
 }
