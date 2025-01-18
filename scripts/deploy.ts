@@ -103,7 +103,7 @@ async function main() {
   await courseMarket.addCourse(
     "COURSE-001",
     "初级英语会话课程",
-    10,
+    2,
     "https://gateway.pinata.cloud/ipfs/bafkreia7eliuw4pll5y4afkqwwwatoxmbvvyudz4hmvym7rxopkp36pww4", // 添加元数据 URI
     "https://nuo-english.s3.us-east-2.amazonaws.com/COURSE-001.mp4" // 添加视频链接
   );
@@ -113,7 +113,7 @@ async function main() {
   await courseMarket.addCourse(
     "COURSE-002",
     "商务英语进阶课程",
-    20,
+    1,
     "https://gateway.pinata.cloud/ipfs/bafkreia7eliuw4pll5y4afkqwwwatoxmbvvyudz4hmvym7rxopkp36pww4", // 添加元数据 URI
     "https://nuo-english.s3.us-east-2.amazonaws.com/COURSE-002.mp4" // 添加视频链接
   );
@@ -136,45 +136,7 @@ async function main() {
     console.log("- 视频链接:", course.videoURI);
   }
 
-  // 测试课程购买和完成流程
-  console.log("\n测试课程购买和完成流程...");
-
-  // 1. 创建测试用户
-  const testUserAddress = "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"; // 你想要的特定地址
-  const testUser = await ethers.getImpersonatedSigner(testUserAddress);
-  console.log("测试用户地址:", testUser.address);
-
-  // 2. 转移一些代币给测试用户
-  await mmcToken.transfer(testUser.address, 100);
-  console.log("转移 100 MMC 给测试用户");
-
-  // 3. 测试用户授权 CourseMarket 合约
-  const mmcTokenUser = mmcToken.connect(testUser);
-  await mmcTokenUser.approve(await courseMarket.getAddress(), 100);
-  console.log("测试用户授权 CourseMarket 合约");
-
-  // 4. 测试用户购买课程
-  const courseMarketUser = courseMarket.connect(testUser);
-  await courseMarketUser.purchaseCourse("COURSE-001");
-  console.log("测试用户购买课程 COURSE-001");
-
-  // 5. Oracle（deployer）调用完成课程
-  await courseMarket.completeCourse(testUser.address, "COURSE-001");
-  console.log("Oracle 标记课程完成");
-
-  // 6. 验证 NFT 铸造结果
-  const nftBalance = await mmcNFT.balanceOf(testUser.address);
-  console.log("\nNFT 铸造结果:");
-  console.log("- 用户 NFT 数量:", nftBalance.toString());
-
-  if (nftBalance > 0) {
-    const tokenId = await mmcNFT.tokenOfOwnerByIndex(testUser.address, 0);
-    const tokenURI = await mmcNFT.tokenURI(tokenId);
-    console.log("- NFT Token ID:", tokenId.toString());
-    console.log("- NFT Token URI:", tokenURI);
-  }
-
-  // 在部署完 CourseMarket 后添加
+  // 部署 MockOracle
   console.log("\n部署 MockOracle...");
   const MockOracle = await ethers.getContractFactory("MockOracle");
   const mockOracle = await MockOracle.deploy(await courseMarket.getAddress());
@@ -183,13 +145,22 @@ async function main() {
   // 设置 CourseMarket 的 oracle 地址为 MockOracle
   await courseMarket.setOracle(await mockOracle.getAddress());
   console.log("CourseMarket oracle 已更新为 MockOracle");
-  
+
   // 显示所有合约地址
   console.log("\n所有合约部署完成！");
-  console.log("MMCToken:", await mmcToken.getAddress());
-  console.log("MMCERC721Coin:", await mmcNFT.getAddress());
-  console.log("CourseMarket:", await courseMarket.getAddress());
-  console.log("MockOracle:", await mockOracle.getAddress());
+  console.log(
+    "export const MMCTokenAddress=",
+    `"${await mmcToken.getAddress()}"`
+  );
+  console.log("export const mmcNFTAddress=", `"${await mmcNFT.getAddress()}"`);
+  console.log(
+    "export const courseMarketAddress=",
+    `"${await courseMarket.getAddress()}"`
+  );
+  console.log(
+    "export const mockOracleAddress=",
+    `"${await mockOracle.getAddress()}"`
+  );
 }
 
 // 运行部署脚本
