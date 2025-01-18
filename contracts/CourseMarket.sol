@@ -51,6 +51,9 @@ contract CourseMarket is Ownable {
     // 课程总数计数器
     uint256 public courseCount;
 
+    // 添加课程完成记录映射：用户地址 => courseId => 是否完成
+    mapping(address => mapping(uint256 => bool)) public completedCourses;
+
     // 定义事件，记录课程购买
     event CoursePurchased(
         address indexed buyer,
@@ -226,34 +229,35 @@ contract CourseMarket is Ownable {
         uint256 price;
         bool isActive;
         address creator;
-        bool purchased;  // 添加购买状态字段
-        string metadataURI;  // 添加元数据 URI 字段
-        string videoURI;  // 添加视频链接字段
+        bool purchased;
+        bool completed;  // 添加完成状态字段
+        string metadataURI;
+        string videoURI;
     }
 
     // 修改分页查询函数
     function getCoursesByPage(
-        address user,  // 如果未连接钱包，前端传入 address(0)
+        address user,
         uint256 page,
         uint256 pageSize
     ) external view returns (CourseView[] memory, uint256) {
-        // 如果是零地址，则将 user 设为 msg.sender
-        address actualUser = user == address(0) ? msg.sender : user;
-        
         require(pageSize > 0, "Page size must be greater than 0");
         
-        uint256 startIndex = page * pageSize;
-        require(startIndex <= courseCount, "Page out of bounds");
-        
-        uint256 returnSize = pageSize;
-        if (startIndex + pageSize > courseCount) {
-            returnSize = courseCount - startIndex;
+        // 修改分页逻辑
+        uint256 start = page * pageSize + 1;  // 从1开始计数
+        uint256 end = start + pageSize - 1;   // 计算结束位置
+        if (end > courseCount) {
+            end = courseCount;
         }
+        
+        // 计算实际返回的数量
+        uint256 returnSize = end >= start ? end - start + 1 : 0;
         
         CourseView[] memory result = new CourseView[](returnSize);
         
+        // 修改循环逻辑
         for (uint256 i = 0; i < returnSize; i++) {
-            uint256 courseId = startIndex + i + 1;
+            uint256 courseId = start + i;
             Course memory course = courses[courseId];
             
             result[i] = CourseView({
@@ -262,9 +266,10 @@ contract CourseMarket is Ownable {
                 price: course.price,
                 isActive: course.isActive,
                 creator: course.creator,
-                purchased: userCourses[actualUser][courseId],
+                purchased: userCourses[user][courseId],
+                completed: completedCourses[user][courseId],
                 metadataURI: course.metadataURI,
-                videoURI: course.videoURI  // 添加视频链接字段
+                videoURI: course.videoURI
             });
         }
         
@@ -281,6 +286,7 @@ contract CourseMarket is Ownable {
         uint256 courseId = web2ToCourseId[web2CourseId];
         require(courseId > 0, "Course does not exist");
         require(userCourses[student][courseId], "Course not purchased");
+        require(!completedCourses[student][courseId], "Course already completed");  // 添加检查
 
         Course memory course = courses[courseId];
         
@@ -299,6 +305,9 @@ contract CourseMarket is Ownable {
             student,
             certificateURI
         );
+
+        // 记录课程完成状态
+        completedCourses[student][courseId] = true;
 
         emit CourseCompleted(
             student,

@@ -174,11 +174,22 @@ async function main() {
     console.log("- NFT Token URI:", tokenURI);
   }
 
+  // 在部署完 CourseMarket 后添加
+  console.log("\n部署 MockOracle...");
+  const MockOracle = await ethers.getContractFactory("MockOracle");
+  const mockOracle = await MockOracle.deploy(await courseMarket.getAddress());
+  await mockOracle.waitForDeployment();
+
+  // 设置 CourseMarket 的 oracle 地址为 MockOracle
+  await courseMarket.setOracle(await mockOracle.getAddress());
+  console.log("CourseMarket oracle 已更新为 MockOracle");
+  
   // 显示所有合约地址
   console.log("\n所有合约部署完成！");
   console.log("MMCToken:", await mmcToken.getAddress());
   console.log("MMCERC721Coin:", await mmcNFT.getAddress());
   console.log("CourseMarket:", await courseMarket.getAddress());
+  console.log("MockOracle:", await mockOracle.getAddress());
 }
 
 // 运行部署脚本
