@@ -104,7 +104,8 @@ async function main() {
     "COURSE-001",
     "初级英语会话课程",
     10,
-    "https://gateway.pinata.cloud/ipfs/bafkreia7eliuw4pll5y4afkqwwwatoxmbvvyudz4hmvym7rxopkp36pww4" // 添加元数据 URI
+    "https://gateway.pinata.cloud/ipfs/bafkreia7eliuw4pll5y4afkqwwwatoxmbvvyudz4hmvym7rxopkp36pww4", // 添加元数据 URI
+    "https://nuo-english.s3.us-east-2.amazonaws.com/COURSE-001.mp4" // 添加视频链接
   );
   console.log("- 测试课程1添加成功");
 
@@ -113,7 +114,8 @@ async function main() {
     "COURSE-002",
     "商务英语进阶课程",
     20,
-    "https://gateway.pinata.cloud/ipfs/bafkreia7eliuw4pll5y4afkqwwwatoxmbvvyudz4hmvym7rxopkp36pww4" // 添加元数据 URI
+    "https://gateway.pinata.cloud/ipfs/bafkreia7eliuw4pll5y4afkqwwwatoxmbvvyudz4hmvym7rxopkp36pww4", // 添加元数据 URI
+    "https://nuo-english.s3.us-east-2.amazonaws.com/COURSE-002.mp4" // 添加视频链接
   );
   console.log("- 测试课程2添加成功");
 
@@ -131,6 +133,7 @@ async function main() {
     console.log("- 价格:", course.price.toString(), "MMC");
     console.log("- 创建者:", course.creator);
     console.log("- 元数据 URI:", course.metadataURI);
+    console.log("- 视频链接:", course.videoURI);
   }
 
   // 测试课程购买和完成流程

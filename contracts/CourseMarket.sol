@@ -36,6 +36,7 @@ contract CourseMarket is Ownable {
         bool isActive; // 课程是否可购买
         address creator; // 课程创建者地址
         string metadataURI;  // 添加元数据 URI 字段，包含课程图片等信息
+        string videoURI;  // 添加视频链接字段
     }
 
     // 存储所有课程的映射：courseId => Course
@@ -131,17 +132,20 @@ contract CourseMarket is Ownable {
      * @param name 课程名称
      * @param price 课程价格(MMC代币)
      * @param metadataURI 元数据 URI
+     * @param videoURI 视频链接
      */
     function addCourse(
         string memory web2CourseId,
         string memory name,
         uint256 price,
-        string memory metadataURI  // 添加元数据参数
+        string memory metadataURI,
+        string memory videoURI  // 添加视频链接参数
     ) external onlyOwner {
         require(price > 0, "Price must be greater than 0");
         require(bytes(name).length > 0, "Course name cannot be empty");
         require(bytes(web2CourseId).length > 0, "Web2 course ID cannot be empty");
         require(bytes(metadataURI).length > 0, "Metadata URI cannot be empty");
+        require(bytes(videoURI).length > 0, "Video URI cannot be empty");
         require(web2ToCourseId[web2CourseId] == 0, "Course already exists");
 
         courseCount++;
@@ -152,7 +156,8 @@ contract CourseMarket is Ownable {
             price: price,
             isActive: true,
             creator: msg.sender,
-            metadataURI: metadataURI  // 保存元数据 URI
+            metadataURI: metadataURI,
+            videoURI: videoURI  // 设置视频链接
         });
 
         web2ToCourseId[web2CourseId] = courseCount;
@@ -223,6 +228,7 @@ contract CourseMarket is Ownable {
         address creator;
         bool purchased;  // 添加购买状态字段
         string metadataURI;  // 添加元数据 URI 字段
+        string videoURI;  // 添加视频链接字段
     }
 
     // 修改分页查询函数
@@ -257,7 +263,8 @@ contract CourseMarket is Ownable {
                 isActive: course.isActive,
                 creator: course.creator,
                 purchased: userCourses[actualUser][courseId],
-                metadataURI: course.metadataURI  // 添加元数据 URI
+                metadataURI: course.metadataURI,
+                videoURI: course.videoURI  // 添加视频链接字段
             });
         }
         
