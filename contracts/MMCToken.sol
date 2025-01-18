@@ -73,12 +73,14 @@ contract MMCToken is ERC20, Ownable {
         );
     }
 
-    // 使用 ETH 购买 YD 代币的函数
+    // 使用 ETH 购买 MMC 代币的函数
     function buyWithETH() external payable {
         require(msg.value > 0, "Must send ETH");
+        require(initialDistributionDone, "Initial distribution not done yet");
 
-        // 将 ETH 的 wei 转换为 ETH 单位后再计算代币数量
-        uint256 tokenAmount = (msg.value * TOKENS_PER_ETH) / 1 ether;
+        // 计算代币数量：1 ETH = 1000 MMC
+        uint256 tokenAmount = msg.value * TOKENS_PER_ETH / (10 ** 18);
+        require(tokenAmount > 0, "Token amount too small");
         require(
             totalSupply() + tokenAmount <= MAX_SUPPLY,
             "Would exceed max supply"
@@ -96,8 +98,8 @@ contract MMCToken is ERC20, Ownable {
         require(tokenAmount > 0, "Amount must be greater than 0");
         require(balanceOf(msg.sender) >= tokenAmount, "Insufficient balance");
 
-        // 计算ETH数量 (需要乘以 1 ether 来匹配 buyWithETH 的单位)
-        uint256 ethAmount = (tokenAmount * 1 ether) / TOKENS_PER_ETH;
+        // 计算 ETH 数量：1000 MMC = 1 ETH
+        uint256 ethAmount = tokenAmount * (10 ** 18) / TOKENS_PER_ETH;
         require(
             address(this).balance >= ethAmount,
             "Insufficient ETH in contract"
@@ -106,7 +108,7 @@ contract MMCToken is ERC20, Ownable {
         // 先销毁代币
         _burn(msg.sender, tokenAmount);
 
-        // 发送ETH给用户
+        // 发送 ETH 给用户
         (bool success, ) = payable(msg.sender).call{value: ethAmount}("");
         require(success, "ETH transfer failed");
 

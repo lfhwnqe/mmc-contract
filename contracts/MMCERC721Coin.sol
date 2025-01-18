@@ -71,4 +71,35 @@ contract MMCERC721Coin is ERC721, ERC721URIStorage, ERC721Enumerable, Ownable {
     {
         super._increaseBalance(account, value);
     }
+
+    // 分页获取用户的 NFT
+    function getUserNFTsByPage(address owner, uint256 page, uint256 pageSize) 
+        public 
+        view 
+        returns (uint256[] memory tokenIds, string[] memory tokenURIs) 
+    {
+        uint256 balance = balanceOf(owner);
+        uint256 start = page * pageSize;
+        uint256 end = start + pageSize;
+        
+        // 确保不超出用户拥有的 NFT 数量
+        if (start >= balance) {
+            return (new uint256[](0), new string[](0));
+        }
+        if (end > balance) {
+            end = balance;
+        }
+        
+        uint256 length = end - start;
+        tokenIds = new uint256[](length);
+        tokenURIs = new string[](length);
+        
+        for (uint256 i = 0; i < length; i++) {
+            uint256 tokenId = tokenOfOwnerByIndex(owner, start + i);
+            tokenIds[i] = tokenId;
+            tokenURIs[i] = tokenURI(tokenId);
+        }
+        
+        return (tokenIds, tokenURIs);
+    }
 }
